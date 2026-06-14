@@ -1,15 +1,32 @@
 {
   "name": "discord-forum-mcp",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Discord 포럼 채널 워크플로우를 위한 경량 MCP 서버",
   "type": "module",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "main": "build/index.js",
+  "bin": {
+    "discord-forum-mcp": "build/index.js"
   },
-  "keywords": [],
-  "author": "",
+  "files": [
+    "build/"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "discord",
+    "discord-forum",
+    "claude",
+    "model-context-protocol"
+  ],
+  "author": "ChangwooJ <wjdckddn99@gmail.com>",
   "license": "ISC",
+  "engines": {
+    "node": ">=22"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "discord.js": "^14.26.4"
