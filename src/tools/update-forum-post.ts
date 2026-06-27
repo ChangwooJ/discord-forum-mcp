@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { ChannelType } from "discord.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { discord } from "../discord.js";
+import { getUserToken } from "../discord.js";
 
 export function registerUpdateForumPost(server: McpServer) {
   server.tool(
@@ -13,25 +12,36 @@ export function registerUpdateForumPost(server: McpServer) {
       appliedTags: z.array(z.string()).optional().describe("적용할 태그 ID 목록"),
     },
     async ({ threadId, archived, appliedTags }) => {
-      const channel = await discord.channels.fetch(threadId);
-      if (
-        !channel ||
-        (channel.type !== ChannelType.PublicThread &&
-          channel.type !== ChannelType.PrivateThread)
-      ) {
-        return {
-          isError: true,
-          content: [{ type: "text", text: "스레드 채널이 아닙니다." }],
-        };
+      let token: string;
+      try {
+        token = getUserToken();
+      } catch (e) {
+        return { isError: true, content: [{ type: "text", text: String(e) }] };
       }
 
-      if (appliedTags !== undefined) {
-        await channel.setAppliedTags(appliedTags);
-      }
-      if (archived !== undefined) {
-        await channel.setArchived(archived);
+      const body: Record<string, unknown> = {};
+      if (archived !== undefined) body.archived = archived;
+      if (appliedTags !== undefined) body.applied_tags = appliedTags;
+
+      const res = await fetch(`https://discord.com/api/v10/channels/${threadId}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        return { isError: true, content: [{ type: "text", text: `Discord API 오류: ${err}` }] };
       }
 
+      const channel = await res.json() as {
+        id: string;
+        thread_metadata?: { archived: boolean };
+        applied_tags?: string[];
+      };
       return {
         content: [
           {
@@ -39,8 +49,8 @@ export function registerUpdateForumPost(server: McpServer) {
             text: JSON.stringify(
               {
                 id: channel.id,
-                archived: channel.archived,
-                appliedTags: channel.appliedTags,
+                archived: channel.thread_metadata?.archived,
+                appliedTags: channel.applied_tags,
               },
               null,
               2

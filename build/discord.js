@@ -15,3 +15,9 @@ export async function loginDiscord() {
     await discord.login(token);
     console.error(`Discord 로그인 성공: ${discord.user?.tag}`);
 }
+export function getUserToken() {
+    const token = process.env.DISCORD_USER_TOKEN;
+    if (!token)
+        throw new Error("DISCORD_USER_TOKEN 환경변수가 없습니다.");
+    return token;
+}

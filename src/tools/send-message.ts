@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { ChannelType } from "discord.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { discord } from "../discord.js";
+import { getUserToken } from "../discord.js";
 
 export function registerSendMessage(server: McpServer) {
   server.tool(
@@ -12,25 +11,31 @@ export function registerSendMessage(server: McpServer) {
       message: z.string().describe("게시할 메시지 내용"),
     },
     async ({ channelId, message }) => {
-      const channel = await discord.channels.fetch(channelId);
-      if (
-        !channel ||
-        (channel.type !== ChannelType.PublicThread &&
-          channel.type !== ChannelType.PrivateThread)
-      ) {
-        return {
-          isError: true,
-          content: [{ type: "text", text: "스레드 채널이 아닙니다." }],
-        };
+      let token: string;
+      try {
+        token = getUserToken();
+      } catch (e) {
+        return { isError: true, content: [{ type: "text", text: String(e) }] };
       }
 
-      const sent = await channel.send(message);
+      const res = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
+        method: "POST",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: message }),
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        return { isError: true, content: [{ type: "text", text: `Discord API 오류: ${err}` }] };
+      }
+
+      const sent = await res.json() as { id: string; timestamp: string };
       return {
         content: [
-          {
-            type: "text",
-            text: JSON.stringify({ id: sent.id, createdAt: sent.createdAt }, null, 2),
-          },
+          { type: "text", text: JSON.stringify({ id: sent.id, createdAt: sent.timestamp }, null, 2) },
         ],
       };
     }

@@ -1,3 +1,5 @@
 node_modules
 .env.discord
 CLAUDE.md
+.mcp.json
+.claude/
