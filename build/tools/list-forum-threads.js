@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ChannelType } from "discord.js";
-import { discord } from "../discord.js";
+import { discord, ensureDiscordReady } from "../discord.js";
 const EXCERPT_MAX_LENGTH = 140;
 function makeExcerpt(content, max = EXCERPT_MAX_LENGTH) {
     const oneLine = content.replace(/\s+/g, " ").trim();
@@ -19,6 +19,7 @@ async function fetchFirstMessageExcerpt(thread) {
 }
 export function registerListForumThreads(server) {
     server.tool("list_forum_threads", "포럼 채널의 활성/아카이브 스레드 목록을 반환한다", { channelId: z.string().describe("포럼 채널 ID") }, async ({ channelId }) => {
+        await ensureDiscordReady();
         const channel = await discord.channels.fetch(channelId);
         if (!channel || channel.type !== ChannelType.GuildForum) {
             return {

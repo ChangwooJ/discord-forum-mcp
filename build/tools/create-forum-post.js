@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ChannelFlagsBitField, ChannelType } from "discord.js";
-import { discord, getUserToken } from "../discord.js";
+import { discord, ensureDiscordReady, getUserToken } from "../discord.js";
 export function registerCreateForumPost(server) {
     server.tool("create_forum_post", "포럼 채널에 새 글(스레드)을 작성한다. 태그는 ID 또는 이름으로 지정할 수 있다", {
         channelId: z.string().describe("포럼 채널 ID"),
@@ -23,6 +23,7 @@ export function registerCreateForumPost(server) {
         catch (e) {
             return { isError: true, content: [{ type: "text", text: String(e) }] };
         }
+        await ensureDiscordReady();
         const channel = await discord.channels.fetch(channelId);
         if (!channel || channel.type !== ChannelType.GuildForum) {
             return {

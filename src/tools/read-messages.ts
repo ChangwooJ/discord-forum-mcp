@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ChannelType } from "discord.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { discord } from "../discord.js";
+import { discord, ensureDiscordReady } from "../discord.js";
 
 export function registerReadMessages(server: McpServer) {
   server.tool(
@@ -12,6 +12,7 @@ export function registerReadMessages(server: McpServer) {
       limit: z.number().optional().describe("가져올 메시지 수 (기본 50, 최대 100)"),
     },
     async ({ channelId, limit = 50 }) => {
+      await ensureDiscordReady();
       const channel = await discord.channels.fetch(channelId);
       if (
         !channel ||

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ChannelFlagsBitField, ChannelType } from "discord.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { discord, getUserToken } from "../discord.js";
+import { discord, ensureDiscordReady, getUserToken } from "../discord.js";
 
 export function registerCreateForumPost(server: McpServer) {
   server.tool(
@@ -29,6 +29,7 @@ export function registerCreateForumPost(server: McpServer) {
         return { isError: true, content: [{ type: "text", text: String(e) }] };
       }
 
+      await ensureDiscordReady();
       const channel = await discord.channels.fetch(channelId);
       if (!channel || channel.type !== ChannelType.GuildForum) {
         return {

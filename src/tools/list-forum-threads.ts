@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ChannelType, type AnyThreadChannel } from "discord.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { discord } from "../discord.js";
+import { discord, ensureDiscordReady } from "../discord.js";
 
 const EXCERPT_MAX_LENGTH = 140;
 
@@ -26,6 +26,7 @@ export function registerListForumThreads(server: McpServer) {
     "포럼 채널의 활성/아카이브 스레드 목록을 반환한다",
     { channelId: z.string().describe("포럼 채널 ID") },
     async ({ channelId }) => {
+      await ensureDiscordReady();
       const channel = await discord.channels.fetch(channelId);
       if (!channel || channel.type !== ChannelType.GuildForum) {
         return {
