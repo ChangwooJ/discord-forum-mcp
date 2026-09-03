@@ -17,24 +17,37 @@ Discord 포럼 채널 워크플로우를 위한 경량 MCP 서버.
 
 ### list_forum_threads
 
+활성 스레드가 먼저 오고 그다음 아카이브 스레드가 옵니다.
+
 **입력**
 - `channelId` (string) — 포럼 채널 ID
+- `limit` (number, 선택) — 반환할 스레드 수 (기본 25, 최대 100)
+- `includeArchived` (boolean, 선택) — 아카이브 스레드 포함 여부 (기본 `true`)
+- `archivedBefore` (string, 선택) — 페이지네이션 커서. 이전 응답의 `nextArchivedBefore`를 그대로 넣습니다
 
 **반환**
 ```json
-[
-  {
-    "id": "1514933753422680165",
-    "title": "회원 탈퇴 API 구현",
-    "archived": false,
-    "appliedTags": ["1514867292918513735"],
-    "lastActivity": "2025-06-14T00:00:00.000Z",
-    "firstMessageExcerpt": "탈퇴 시 개인정보 즉시 파기 여부부터 정해야 합니다…"
-  }
-]
+{
+  "threads": [
+    {
+      "id": "1514933753422680165",
+      "title": "회원 탈퇴 API 구현",
+      "archived": false,
+      "appliedTags": ["1514867292918513735"],
+      "lastActivity": "2025-06-14T00:00:00.000Z",
+      "firstMessageExcerpt": "탈퇴 시 개인정보 즉시 파기 여부부터 정해야 합니다…"
+    }
+  ],
+  "hasMore": true,
+  "nextArchivedBefore": "2025-05-02T11:20:31.000Z"
+}
 ```
 
 `firstMessageExcerpt`는 원글 본문을 한 줄로 정리한 140자 발췌입니다. 원글을 못 가져오면 빈 문자열이 됩니다.
+
+> 발췌는 스레드마다 API 호출이 하나씩 붙습니다. `limit`은 응답 크기뿐 아니라 호출량도 함께 제어하므로 필요 이상으로 키우지 않는 편이 좋습니다.
+
+**다음 페이지 가져오기** — `hasMore`가 `true`면 `nextArchivedBefore`를 `archivedBefore`에 넣어 다시 호출합니다. 커서로 넘길 때는 활성 스레드를 건너뛰고 아카이브 스레드만 이어서 반환합니다.
 
 ### get_forum_tags
 

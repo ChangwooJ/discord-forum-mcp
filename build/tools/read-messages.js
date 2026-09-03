@@ -4,7 +4,13 @@ import { discord, ensureDiscordReady } from "../discord.js";
 export function registerReadMessages(server) {
     server.tool("read_messages", "스레드(포럼 글)의 메시지(원글+댓글)를 읽는다", {
         channelId: z.string().describe("스레드 ID"),
-        limit: z.number().optional().describe("가져올 메시지 수 (기본 50, 최대 100)"),
+        limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(100)
+            .optional()
+            .describe("가져올 메시지 수 (기본 50, 최대 100)"),
     }, async ({ channelId, limit = 50 }) => {
         await ensureDiscordReady();
         const channel = await discord.channels.fetch(channelId);
