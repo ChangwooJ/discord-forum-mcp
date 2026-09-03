@@ -1,6 +1,22 @@
 import { z } from "zod";
 import { ChannelType } from "discord.js";
 import { discord } from "../discord.js";
+const EXCERPT_MAX_LENGTH = 140;
+function makeExcerpt(content, max = EXCERPT_MAX_LENGTH) {
+    const oneLine = content.replace(/\s+/g, " ").trim();
+    if (oneLine.length <= max)
+        return oneLine;
+    return oneLine.slice(0, max).trimEnd() + "…";
+}
+async function fetchFirstMessageExcerpt(thread) {
+    try {
+        const starter = await thread.fetchStarterMessage();
+        return starter ? makeExcerpt(starter.content) : "";
+    }
+    catch {
+        return "";
+    }
+}
 export function registerListForumThreads(server) {
     server.tool("list_forum_threads", "포럼 채널의 활성/아카이브 스레드 목록을 반환한다", { channelId: z.string().describe("포럼 채널 ID") }, async ({ channelId }) => {
         const channel = await discord.channels.fetch(channelId);
@@ -14,16 +30,14 @@ export function registerListForumThreads(server) {
             channel.threads.fetchActive(),
             channel.threads.fetchArchived(),
         ]);
-        const threads = [
-            ...active.threads.values(),
-            ...archived.threads.values(),
-        ].map((t) => ({
+        const threads = await Promise.all([...active.threads.values(), ...archived.threads.values()].map(async (t) => ({
             id: t.id,
             title: t.name,
             archived: t.archived ?? false,
             appliedTags: t.appliedTags,
             lastActivity: t.archiveTimestamp ?? t.createdAt,
-        }));
+            firstMessageExcerpt: await fetchFirstMessageExcerpt(t),
+        })));
         return { content: [{ type: "text", text: JSON.stringify(threads, null, 2) }] };
     });
 }
