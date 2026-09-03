@@ -1,6 +1,6 @@
 {
   "name": "discord-forum-mcp",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "Discord 포럼 채널 워크플로우를 위한 경량 MCP 서버",
   "type": "module",
   "main": "build/index.js",
