@@ -1,0 +1,35 @@
+name: Publish to npm
+
+# v* 태그를 푸시하면 배포된다. workflow_dispatch로 수동 실행도 가능하다.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  id-token: write # Trusted Publishing(OIDC)에 필요
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      # Trusted Publishing은 npm 11.5.1 이상을 요구한다.
+      - run: npm install -g npm@latest
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - run: npm run test --if-present
+
+      # NODE_AUTH_TOKEN 불필요 — OIDC로 단명 자격증명을 발급받는다.
+      - run: npm publish

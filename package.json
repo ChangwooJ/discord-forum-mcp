@@ -24,6 +24,14 @@
   ],
   "author": "ChangwooJ <wjdckddn99@gmail.com>",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChangwooJ/discord-forum-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ChangwooJ/discord-forum-mcp/issues"
+  },
+  "homepage": "https://github.com/ChangwooJ/discord-forum-mcp#readme",
   "engines": {
     "node": ">=22"
   },
