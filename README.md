@@ -28,10 +28,13 @@ Discord 포럼 채널 워크플로우를 위한 경량 MCP 서버.
     "title": "회원 탈퇴 API 구현",
     "archived": false,
     "appliedTags": ["1514867292918513735"],
-    "lastActivity": "2025-06-14T00:00:00.000Z"
+    "lastActivity": "2025-06-14T00:00:00.000Z",
+    "firstMessageExcerpt": "탈퇴 시 개인정보 즉시 파기 여부부터 정해야 합니다…"
   }
 ]
 ```
+
+`firstMessageExcerpt`는 원글 본문을 한 줄로 정리한 140자 발췌입니다. 원글을 못 가져오면 빈 문자열이 됩니다.
 
 ### get_forum_tags
 
@@ -140,6 +143,15 @@ Discord 포럼 채널 워크플로우를 위한 경량 MCP 서버.
 
 - `DISCORD_TOKEN` — 봇 토큰. 조회 계열 도구(`list_forum_threads`, `get_forum_tags`, `read_messages`)와 태그 검증에 사용합니다.
 - `DISCORD_USER_TOKEN` — 유저 토큰. 쓰기 계열 도구(`create_forum_post`, `send_message`, `update_forum_post`)가 봇이 아닌 본인 계정으로 글을 남기기 위해 사용합니다.
+
+아래 예시처럼 MCP 설정의 `env` 블록에 넣어도 되고,
+**실행 디렉토리(루트)에 `.env.discord` 파일을 두면 서버가 시작 시 자동으로 읽습니다.**
+
+```
+# .env.discord
+DISCORD_TOKEN=your_bot_token_here
+DISCORD_USER_TOKEN=your_user_token_here
+```
 
 ### Claude Code
 

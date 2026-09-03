@@ -1,7 +1,24 @@
 import { z } from "zod";
-import { ChannelType } from "discord.js";
+import { ChannelType, type AnyThreadChannel } from "discord.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { discord } from "../discord.js";
+
+const EXCERPT_MAX_LENGTH = 140;
+
+function makeExcerpt(content: string, max = EXCERPT_MAX_LENGTH): string {
+  const oneLine = content.replace(/\s+/g, " ").trim();
+  if (oneLine.length <= max) return oneLine;
+  return oneLine.slice(0, max).trimEnd() + "…";
+}
+
+async function fetchFirstMessageExcerpt(thread: AnyThreadChannel): Promise<string> {
+  try {
+    const starter = await thread.fetchStarterMessage();
+    return starter ? makeExcerpt(starter.content) : "";
+  } catch {
+    return "";
+  }
+}
 
 export function registerListForumThreads(server: McpServer) {
   server.tool(
@@ -22,16 +39,16 @@ export function registerListForumThreads(server: McpServer) {
         channel.threads.fetchArchived(),
       ]);
 
-      const threads = [
-        ...active.threads.values(),
-        ...archived.threads.values(),
-      ].map((t) => ({
-        id: t.id,
-        title: t.name,
-        archived: t.archived ?? false,
-        appliedTags: t.appliedTags,
-        lastActivity: t.archiveTimestamp ?? t.createdAt,
-      }));
+      const threads = await Promise.all(
+        [...active.threads.values(), ...archived.threads.values()].map(async (t) => ({
+          id: t.id,
+          title: t.name,
+          archived: t.archived ?? false,
+          appliedTags: t.appliedTags,
+          lastActivity: t.archiveTimestamp ?? t.createdAt,
+          firstMessageExcerpt: await fetchFirstMessageExcerpt(t),
+        }))
+      );
 
       return { content: [{ type: "text", text: JSON.stringify(threads, null, 2) }] };
     }
