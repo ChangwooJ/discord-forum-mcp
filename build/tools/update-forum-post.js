@@ -1,10 +1,29 @@
 import { z } from "zod";
 import { getUserToken } from "../discord.js";
+const outputShape = {
+    id: z.string(),
+    archived: z.boolean().optional(),
+    appliedTags: z.array(z.string()).optional(),
+};
 export function registerUpdateForumPost(server) {
-    server.tool("update_forum_post", "포럼 글(스레드)의 아카이브 상태 또는 적용 태그를 변경한다", {
-        threadId: z.string().describe("스레드 ID"),
-        archived: z.boolean().optional().describe("아카이브 여부"),
-        appliedTags: z.array(z.string()).optional().describe("적용할 태그 ID 목록"),
+    server.registerTool("update_forum_post", {
+        title: "포럼 글 상태 변경",
+        description: "포럼 글(스레드)의 아카이브 상태 또는 적용 태그를 변경한다",
+        inputSchema: {
+            threadId: z.string().describe("스레드 ID"),
+            archived: z.boolean().optional().describe("아카이브 여부"),
+            appliedTags: z
+                .array(z.string())
+                .optional()
+                .describe("적용할 태그 ID 목록. 기존 태그를 덮어쓴다"),
+        },
+        outputSchema: outputShape,
+        annotations: {
+            readOnlyHint: false,
+            destructiveHint: true, // appliedTags는 기존 태그를 덮어쓴다
+            idempotentHint: true, // 같은 인자로 다시 불러도 결과 상태가 같다
+            openWorldHint: true,
+        },
     }, async ({ threadId, archived, appliedTags }) => {
         let token;
         try {
@@ -30,18 +49,15 @@ export function registerUpdateForumPost(server) {
             const err = await res.text();
             return { isError: true, content: [{ type: "text", text: `Discord API 오류: ${err}` }] };
         }
-        const channel = await res.json();
+        const channel = (await res.json());
+        const result = {
+            id: channel.id,
+            archived: channel.thread_metadata?.archived,
+            appliedTags: channel.applied_tags,
+        };
         return {
-            content: [
-                {
-                    type: "text",
-                    text: JSON.stringify({
-                        id: channel.id,
-                        archived: channel.thread_metadata?.archived,
-                        appliedTags: channel.applied_tags,
-                    }, null, 2),
-                },
-            ],
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            structuredContent: result,
         };
     });
 }

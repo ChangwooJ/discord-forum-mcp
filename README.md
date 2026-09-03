@@ -15,6 +15,10 @@ Discord 포럼 채널 워크플로우를 위한 경량 MCP 서버.
 | `send_message` | 스레드에 메시지 게시 |
 | `update_forum_post` | 스레드의 아카이브 상태 또는 태그 변경 |
 
+각 도구는 MCP tool annotations를 함께 노출합니다. 조회 계열 세 개(`list_forum_threads`, `get_forum_tags`, `read_messages`)는 `readOnlyHint: true`라, 지원하는 클라이언트에서는 매번 승인을 묻지 않도록 설정할 수 있습니다. `update_forum_post`는 `appliedTags`가 기존 태그를 덮어쓰므로 `destructiveHint: true`입니다.
+
+모든 도구가 `outputSchema`를 선언하므로 응답을 텍스트 파싱 없이 구조화된 데이터로 받을 수 있습니다.
+
 ### list_forum_threads
 
 활성 스레드가 먼저 오고 그다음 아카이브 스레드가 옵니다.

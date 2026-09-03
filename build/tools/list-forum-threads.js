@@ -19,24 +19,48 @@ async function fetchFirstMessageExcerpt(thread) {
         return "";
     }
 }
+const outputShape = {
+    threads: z.array(z.object({
+        id: z.string(),
+        title: z.string(),
+        archived: z.boolean(),
+        appliedTags: z.array(z.string()),
+        lastActivity: z.string().nullable(),
+        firstMessageExcerpt: z.string(),
+    })),
+    hasMore: z.boolean().describe("가져오지 않은 아카이브 스레드가 더 있는지 여부"),
+    nextArchivedBefore: z
+        .string()
+        .optional()
+        .describe("다음 페이지를 요청할 때 archivedBefore에 넣을 커서"),
+};
 export function registerListForumThreads(server) {
-    server.tool("list_forum_threads", "포럼 채널의 스레드 목록을 최신순으로 반환한다. 활성 스레드가 먼저 오고 그다음 아카이브 스레드가 온다", {
-        channelId: z.string().describe("포럼 채널 ID"),
-        limit: z
-            .number()
-            .int()
-            .min(1)
-            .max(MAX_LIMIT)
-            .optional()
-            .describe(`반환할 스레드 수 (기본 ${DEFAULT_LIMIT}, 최대 ${MAX_LIMIT})`),
-        includeArchived: z
-            .boolean()
-            .optional()
-            .describe("아카이브된 스레드 포함 여부 (기본 true)"),
-        archivedBefore: z
-            .string()
-            .optional()
-            .describe("이 ISO 타임스탬프보다 이전에 아카이브된 스레드부터 가져온다. 이전 응답의 nextArchivedBefore를 그대로 넣으면 다음 페이지가 된다"),
+    server.registerTool("list_forum_threads", {
+        title: "포럼 스레드 목록",
+        description: "포럼 채널의 스레드 목록을 최신순으로 반환한다. 활성 스레드가 먼저 오고 그다음 아카이브 스레드가 온다",
+        inputSchema: {
+            channelId: z.string().describe("포럼 채널 ID"),
+            limit: z
+                .number()
+                .int()
+                .min(1)
+                .max(MAX_LIMIT)
+                .optional()
+                .describe(`반환할 스레드 수 (기본 ${DEFAULT_LIMIT}, 최대 ${MAX_LIMIT})`),
+            includeArchived: z
+                .boolean()
+                .optional()
+                .describe("아카이브된 스레드 포함 여부 (기본 true)"),
+            archivedBefore: z
+                .string()
+                .optional()
+                .describe("이 ISO 타임스탬프보다 이전에 아카이브된 스레드부터 가져온다. 이전 응답의 nextArchivedBefore를 그대로 넣으면 다음 페이지가 된다"),
+        },
+        outputSchema: outputShape,
+        annotations: {
+            readOnlyHint: true,
+            openWorldHint: true,
+        },
     }, async ({ channelId, limit = DEFAULT_LIMIT, includeArchived = true, archivedBefore }) => {
         await ensureDiscordReady();
         const channel = await discord.channels.fetch(channelId);
@@ -80,6 +104,9 @@ export function registerListForumThreads(server) {
             hasMore: hasMoreArchived,
             ...(nextArchivedBefore ? { nextArchivedBefore } : {}),
         };
-        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+        return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            structuredContent: result,
+        };
     });
 }
